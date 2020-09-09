@@ -4,12 +4,16 @@ on:
   schedule:
     - cron:  '56 3 * * 1'
   push:
+env:
+  IMAGE_NAME: vondruska/borgmatic
 
 jobs:
   build:
+    strategy:
+      matrix:
+        arch: [amd64, arm32v7, arm64v8]
+
     runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: vondruska/borgmatic
   
     steps:
     - uses: actions/checkout@v1
@@ -22,30 +26,22 @@ jobs:
     
     - name: Register QEMU
       run: docker run --rm --privileged hypriot/qemu-register
-    - name: Set build ID
-      run: |
-        echo ::set-env name=BUILD_ID::$(date +%s)
-    
-      # this probably should be a matrix but with build numbers not being a thing
-      # and matrix creates multiple jobs that don't share context
-      # it makes it hard
-    - name: Build docker image (x64)
+      
+    - name: Build docker image
       env:
-        ARCH: amd64
-      run: docker build --pull -f Dockerfile --build-arg ARCH -t "$IMAGE_NAME:$ARCH-$BUILD_ID" .
-
-    - name: Build docker image (arm32v7)
-      env:
-        ARCH: arm32v7
-      run: docker build --pull -f Dockerfile --build-arg ARCH -t "$IMAGE_NAME:$ARCH-$BUILD_ID" .
+        ARCH: ${{ matrix.arch }}
+      run: docker build --pull -f Dockerfile --build-arg ARCH -t "$IMAGE_NAME:$ARCH-$GITHUB_RUN_ID" .
 
     - name: Push images
       run: docker push $IMAGE_NAME
     
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
     - name: Manifest
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
       if: github.ref == 'refs/heads/master'
       run: |
-        docker manifest create "$IMAGE_NAME:latest" "$IMAGE_NAME:amd64-$BUILD_ID" "$IMAGE_NAME:arm32v7-$BUILD_ID"
+        docker manifest create "$IMAGE_NAME:latest" "$IMAGE_NAME:amd64-$GITHUB_RUN_ID" "$IMAGE_NAME:arm32v7-$GITHUB_RUN_ID"
         docker manifest push "$IMAGE_NAME:latest"
