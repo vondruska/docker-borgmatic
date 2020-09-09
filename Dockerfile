@@ -1,12 +1,13 @@
 ARG ARCH=library
 FROM $ARCH/alpine:latest AS builder
 MAINTAINER b3vis
-ARG BORG_VERSION=1.1.10
-ARG BORGMATIC_VERSION=1.3.14
+ARG BORG_VERSION=1.1.13
+ARG BORGMATIC_VERSION=1.5.8
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
     alpine-sdk \
     python3-dev \
+    py3-pip \
     openssl-dev \
     lz4-dev \
     acl-dev \
@@ -26,6 +27,7 @@ RUN apk upgrade --no-cache \
     tzdata \
     sshfs \
     python3 \
+    fuse \
     openssl \
     ca-certificates \
     lz4-libs \
