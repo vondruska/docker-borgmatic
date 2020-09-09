@@ -27,6 +27,8 @@ jobs:
     - name: Register QEMU
       run: docker run --rm --privileged hypriot/qemu-register
       
+    - uses: satackey/action-docker-layer-caching@v0.0.8
+      
     - name: Build docker image
       env:
         ARCH: ${{ matrix.arch }}
@@ -49,5 +51,5 @@ jobs:
         DOCKER_CLI_EXPERIMENTAL: enabled
       if: github.ref == 'refs/heads/master'
       run: |
-        docker manifest create "$IMAGE_NAME:latest" "$IMAGE_NAME:amd64-$GITHUB_RUN_ID" "$IMAGE_NAME:arm32v7-$GITHUB_RUN_ID"
+        docker manifest create "$IMAGE_NAME:latest" "$IMAGE_NAME:amd64-$GITHUB_RUN_ID" "$IMAGE_NAME:arm64v8-$GITHUB_RUN_ID" "$IMAGE_NAME:arm32v7-$GITHUB_RUN_ID"
         docker manifest push "$IMAGE_NAME:latest"
